@@ -26,7 +26,7 @@ def _img_to_opacity(img, opacity):
 
 
 class Heatmapper:
-    def __init__(self, point_diameter=50, point_strength=0.2, opacity=0.65,
+    def __init__(self, point_diameter=100, point_strength=0.2, opacity=0.65,
                  colours='default',
                  grey_heatmapper='PIL'):
         """

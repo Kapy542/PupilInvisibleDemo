@@ -8,6 +8,7 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 import cv2
 
+print("Discovering device...")
 device = discover_one_device(max_search_duration_seconds=10.0)
 
 # List all devices that could be found within 10 seconds
