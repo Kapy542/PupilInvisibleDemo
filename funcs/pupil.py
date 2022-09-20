@@ -4,8 +4,10 @@
 from pupil_labs.realtime_api.simple import discover_one_device
 
 # undistord gaze and image
-def undistord(frme, gaze):
-    return 0
+def undistord(frame, gaze):
+    frame_undistorted = frame
+    gaze_undistorted = gaze
+    return frame_undistorted, gaze_undistorted
     
 
 # Scan for pupil glasses in the same network
