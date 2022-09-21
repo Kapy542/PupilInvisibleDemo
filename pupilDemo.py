@@ -9,6 +9,9 @@ from funcs.aruco import *
 from funcs.pupil import discover_device
 from funcs.click_game import *
 
+from heatmappy.heatmap import Heatmapper
+from PIL import Image
+
 # Needs to be matched with monitor resolution
 cols_monitor = 2560-100
 rows_monitor = 1440-100
@@ -24,25 +27,31 @@ area_coords = get_area_coords()
 
 # overlay = cv2.imread("./heatmappy/assets/cat.jpg")
 overlay = cv2.imread("c:Users/kapyla/Desktop/earth.jpg")
-overlay = cv2.resize(overlay, (cols_world,rows_world), interpolation = cv2.INTER_AREA)
+# overlay = cv2.resize(overlay, (cols_world,rows_world), interpolation = cv2.INTER_AREA)
 
 def main():
 
     # Scan for pupil glasses in the same network
     device = discover_device()    
     
-    # blob = get_new_blob(area_coords)
-
+    gazes = []
+    draw = False
+    
     while True:
-        image = background
-        # image = add_content(image, overlay)
-        image = draw_borders(image)
-        # image = draw_blob(image, blob)
+        # image = background
+        image = draw_borders(background)
+        image = add_content(image, overlay)
+        
+        if draw:
+            image = cv2.circle(
+                image,
+                (int(round(gaze_in_monitor[0])), int(round(gaze_in_monitor[1]))),
+                10, (0, 0, 255), 2
+            )
+            draw = False
         
         cv2.imshow("Pupil Invisible - Live Preview", image)   
-        k = cv2.waitKey(33)
-        if k==27:    # Esc key to stop
-            break
+        key = cv2.waitKey(33)
             
         # Fetch new matching img-gaze pair from the glasses
         scene_sample, gaze_sample = device.receive_matched_scene_video_frame_and_gaze()
@@ -61,35 +70,34 @@ def main():
             # Adjust gaze coordinates to monitor
             gaze_in_monitor = np.matmul( projective_matrix, gaze )
             gaze_in_monitor = gaze_in_monitor / gaze_in_monitor[2]
-                    
-            if k==32:
-                image = draw(image, coords, area_coords)
-            # # Show world video with gaze overlay
-            # cv2.circle(
-            #     image,
-            #     (int(round(gaze_in_monitor[0])), int(round(gaze_in_monitor[1]))),
-            #     10, (0, 0, 255), 2
-            # )
             
-            # image = cv2.addWeighted(image, 0.5, warped_world_img, 0.5, 0)
+            # Keep trach of gaze locations (lower resolution)
+            gazes.append( (gaze_in_monitor[0]/2, gaze_in_monitor[1]/2) ) # HOX
             
-        # cv2.imshow("Pupil Invisible - Live Preview", image)   
-        # k = cv2.waitKey(33)
-        # if k==27:    # Esc key to stop
-        #     break
-        # elif k==32:
-        #     draw = True
-        #     # if  is_a_hit(blob, gaze_in_monitor):
-        #     #     blob = get_new_blob(area_coords)
+            if key==32:
+                # Show world video with gaze overlay
+                draw = True
         
+        # Draw heatmap, quit and save
+        if key == 27:
+            frame = cv2.resize(image, (0,0), fx=0.5, fy=0.5) # HOX
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            pil_img = Image.fromarray(frame)
+
+            heatmapper = Heatmapper()
+            heatmap = heatmapper.heatmap_on_img(gazes, pil_img)
+            heatmap = np.array(heatmap)
             
-    return warped_world_img
+            heatmap = cv2.cvtColor(heatmap, cv2.COLOR_RGB2BGR)
+
+            cv2.imwrite("./outs/heatmap.jpg", heatmap)
+            cv2.imshow("window", heatmap)
+            key = cv2.waitKey(0)
+            break
+        
+    return gazes
 
 if __name__=="__main__":
    ret_val = main()
    cv2.destroyAllWindows()
    
-#%%
-cv2.imshow("Pupil Invisible - Live Preview", ret_val)   
-k = cv2.waitKey(0)
-cv2.destroyAllWindows()
