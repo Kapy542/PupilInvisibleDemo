@@ -60,7 +60,7 @@ def get_warped(img, projective_matrix):
 
 # TODO Check if it works (first need to resize overlay to match monitor resolution (resolution used in defining projective matrix))
 # Morphs image to the area defined by arucos (background = pupil img)
-# Add overlay img on the content area
+# Add overlay img on the content area (This is world frame)
 def add_overlay(background, overlay, projective_matrix):
     rows, cols = overlay.shape[:2]
     warped = cv2.warpPerspective(overlay, np.linalg.inv(projective_matrix), (cols,rows))

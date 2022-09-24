@@ -2,11 +2,12 @@
 # -*- coding: utf-8 -*-
 
 from pupil_labs.realtime_api.simple import discover_one_device
+import cv2
 
 # undistord gaze and image
-def undistord(frame, gaze):
-    frame_undistorted = frame
-    gaze_undistorted = gaze
+def undistort(frame, gaze, K, distCoeffs):
+    frame_undistorted = cv2.undistort(frame, K, distCoeffs) 
+    gaze_undistorted = 	cv2.undistortImagePoints(gaze, K, distCoeffs)
     return frame_undistorted, gaze_undistorted
     
 

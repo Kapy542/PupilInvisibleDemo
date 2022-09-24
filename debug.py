@@ -30,19 +30,15 @@ radialDistortion = data['radialDistortion']
 distCoeffs = np.zeros(4)
 distCoeffs[:2] = radialDistortion
 
-# Read image that is on foreground
-# overlay = cv2.imread("./heatmappy/assets/cat.jpg")
-# overlay = cv2.imread("c:Users/kapyla/Desktop/earth.jpg")
-overlay = cv2.imread("./imgs/civit2.jpg")
-# overlay = cv2.resize(overlay, (cols_world,rows_world), interpolation = cv2.INTER_AREA)
-
 # Create img with aruco markers on corners
 background = create_aruco_frame()
 background = cv2.resize(background, (cols_monitor,rows_monitor), interpolation = cv2.INTER_AREA)
-background = draw_borders(background)
-background = add_content(background, overlay)
 area_coords = get_area_coords()
 
+# Read image that is on foreground
+overlay = cv2.imread("./heatmappy/assets/cat.jpg")
+# overlay = cv2.imread("c:Users/kapyla/Desktop/earth.jpg")
+# overlay = cv2.resize(overlay, (cols_world,rows_world), interpolation = cv2.INTER_AREA)
 
 def main():
 
@@ -54,33 +50,24 @@ def main():
     
     while True:
         # image = background
-        # image = draw_borders(background)
-        # image = add_content(image, overlay)
-        image = background.copy()
+        image = draw_borders(background)
+        image = add_content(image, overlay)
         
         if draw:
             image = cv2.circle(
                 image,
                 (int(round(gaze_in_monitor[0])), int(round(gaze_in_monitor[1]))),
-                80, (0, 0, 255), 4
+                10, (0, 0, 255), 2
             )
-            # draw = False
-        
-        cv2.imshow("Image", image)   
-        key = cv2.waitKey(33)
-        
+            draw = False
+            
         # Fetch new matching img-gaze pair from the glasses
         scene_sample, gaze_sample = device.receive_matched_scene_video_frame_and_gaze()
         world_img = scene_sample.bgr_pixels     
         #gaze = np.array([int(gaze_sample.x), int(gaze_sample.y), 1])
-        gaze = np.array([gaze_sample.x, gaze_sample.y, 1])
-        world_img, gaze[:2] = undistort(world_img, gaze[:2], K, distCoeffs)
-        
-        world_img = cv2.circle(
-            world_img,
-            (int(round(gaze[0])), int(round(gaze[1]))),
-            40, (0, 0, 255), 2
-        )
+        gaze = np.array([gaze_sample.x, gaze_sample.y])
+        world_img, gaze[:2] = undistort(world_img, gaze, K, distCoeffs)
+                
         cv2.imshow("Pupil Invisible - Live Preview", world_img)   
         key = cv2.waitKey(33)
         
@@ -102,8 +89,7 @@ def main():
             
             if key==32:
                 # Show world video with gaze overlay
-                # draw = True
-                draw = not draw
+                draw = True
         
         # Draw heatmap, quit and save
         if key == 27:
@@ -118,9 +104,11 @@ def main():
             heatmap = cv2.cvtColor(heatmap, cv2.COLOR_RGB2BGR)
 
             cv2.imwrite("./outs/heatmap.jpg", heatmap)
-            cv2.imshow("Heatmap", heatmap)
+            cv2.imshow("window", heatmap)
             key = cv2.waitKey(0)
             break
+        
+        
         
     return gazes
 
